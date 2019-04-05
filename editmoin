@@ -458,12 +458,22 @@ def edit(url, template=None, editfile_func=editfile):
         # Moin >= 1.7
         cookiename, cookievalue = get_session_cookie(user, url)
         urlopener = get_urlopener(url, cookievalue, cookiename)
+        moinfile = fetchfile(urlopener, url, cookievalue, template)
     else:
         # Moin < 1.7
         cookievalue = get_id(url)
-        urlopener = get_urlopener(url, cookievalue)
+        moinfile = None
+        for cookiename in ("MOIN_SESSION_80_ROOT", "MOIN_SESSION_443_ROOT"):
+            try:
+                urlopener = get_urlopener(url, cookievalue, cookiename)
+                moinfile = fetchfile(urlopener, url, cookievalue, template)
+                break
+            except:
+                pass
+        if not moinfile:
+            urlopener = get_urlopener(url, cookievalue)
+            moinfile = fetchfile(urlopener, url, cookievalue, template)
 
-    moinfile = fetchfile(urlopener, url, cookievalue, template)
     try:
         page_edited = editfile_func(moinfile)
         if page_edited:
