@@ -1,0 +1,4 @@
+moin*.vim /usr/share/vim/addons/syntax
+debian/moin.vim usr/share/vim/addons/plugin
+debian/vim-editmoin.yaml usr/share/vim/registry
+editmoin usr/bin
