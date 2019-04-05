@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 """
 Copyright (c) 2002-2006  Gustavo Niemeyer <gustavo@niemeyer.net>
 
@@ -333,6 +333,33 @@ def translate_shortcut(moinurl):
     raise Error, "no suitable url found for shortcut '%s'" % shortcut
 
 
+def substitute_piped_pass(moinurl):
+    """If a password begins with |foo, look up 'foo' in the 'pass' password manager"""
+    o = urlparse.urlparse(moinurl)
+    if not o.password or not o.password.startswith("|"):
+        return moinurl
+    passname = o.password[1:]
+    passname = urllib.unquote(passname)
+    password = exec_pass_for_passname(passname)
+    url_password = urllib.quote(password)
+    netloc = o.username + ":" + url_password + "@" + o.hostname
+    if o.port:
+        netloc += ":" + str(o.port)
+    t = (o.scheme, netloc, o.path, o.params, o.query, o.fragment)
+    return urlparse.urlunparse(t)
+
+cached_passwords = {}
+def exec_pass_for_passname(passname):
+    pwd = cached_passwords.get(passname)
+    if pwd is not None:
+        return pwd
+    """Look up a named password in the 'pass' password manager"""
+    pwd = subprocess.check_output(("pass", passname))
+    pwd = pwd.strip()
+    cached_passwords[passname] = pwd
+    return pwd
+
+
 def get_urlopener(moinurl, cookievalue=None, cookiename="MOIN_SESSION"):
     urlopener = urllib.FancyURLopener()
     proxy = os.environ.get("http_proxy")
@@ -360,7 +387,9 @@ def editfile(moinfile):
     if moinfile.question:
         moinfile.answer = raw_input(moinfile.question + " ")
     filename = moinfile.write_raw()
-    editor = os.environ.get("EDITOR", "sensible-editor")
+    editor = os.environ.get("MOINEDITOR", None)
+    if editor is None:
+        editor = os.environ.get("EDITOR", "sensible-editor")
     digest = md5(open(filename).read()).digest()
     subprocess.call("%s %s" % (editor, filename), shell=True)
     if digest != md5(open(filename).read()).digest():
@@ -453,6 +482,7 @@ def edit(url, template=None, editfile_func=editfile):
         template = url_template
 
     url = translate_shortcut(url)
+    url = substitute_piped_pass(url)
     user = get_user(url)
     if user:
         # Moin >= 1.7

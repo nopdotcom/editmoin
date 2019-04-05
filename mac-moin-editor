@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+cp "$1" "$1.md"
+open "$1.md"
+echo "Press enter to continue"
+read
+cp "$1.md" "$1"
+rm "$1.md"
