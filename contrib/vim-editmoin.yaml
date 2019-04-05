@@ -1,0 +1,7 @@
+addon: editmoin
+description: edit MoinMoin wiki pages in vim
+files:
+  - syntax/moin1_5.vim
+  - syntax/moin1_6.vim
+  - plugin/moin.vim
+
