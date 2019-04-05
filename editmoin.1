@@ -103,6 +103,18 @@ If the server needs Basic HTTP Authentication you can use something like:
 https://user:password@example.com/moin/moin.cgi 123456789.123.12345
 
 .PP
+You can use a command like this to create a
+.B ~/.moin_ids
+file from your current Firefox profile:
+
+.PP
+sqlite3 -separator ' ' .mozilla/*/*.default/cookies.sqlite \\
+.BR
+  "SELECT host,value FROM moz_cookies WHERE name LIKE 'MOIN_SESSION'" \\
+.BR
+  | sed 's_^_https://_' > ~/.moin_ids
+
+.PP
 For using shortcuts (see below), and also for better control, defining
 URLs without IDs in that file is valid.
 
